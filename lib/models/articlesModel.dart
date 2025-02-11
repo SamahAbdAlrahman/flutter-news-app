@@ -11,4 +11,12 @@ class Articlemodel {
   }
   );
 
+  factory Articlemodel.fromJson(Map<String, dynamic> json) {
+    return Articlemodel(
+      title: json["title"] ?? "no title",
+      desc: json["description"] ?? "no description",
+      image: json["urlToImage"] ?? "no image",
+    );
+  }
+
 }

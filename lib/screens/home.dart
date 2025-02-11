@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:news/screens/updateData.dart';
+import 'package:news/services/newServices.dart';
 
 import '../models/articlesModel.dart';
 import 'addData.dart';
@@ -10,74 +11,68 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  String selectedCategory = 'general';
+  final List<String> categories = [
+    'business',
+    'entertainment',
+    'general',
+    'health',
+    'science',
+    'sports',
+    'technology'
+  ];
 
-
-  final _formKey = GlobalKey<FormState>();
-
-
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-
+String errMsg='';
   List<Articlemodel> listArticles=[];
-
-  Future<void> getNews() async {
-    try {
-    Dio dio = Dio();
-    // get res
-    Response response = await dio.get('https://newsapi.org/v2/everything?q=tesla&from=2025-01-06&sortBy=publishedAt&apiKey=1c36a32af5ab4fd78b2d7dd3511aba16');
-      Map<String, dynamic> data= response.data;
-      List<dynamic> articles = data["articles"];
-      List<Articlemodel> artModel=[];
-    for (var item in articles) {
-      Articlemodel article = Articlemodel(
-        title: item["title"] ?? "title unavailable",
-        desc: item["description"] ?? "unavailable",
-        image: item["urlToImage"],
-      );
-
-      artModel.add(article);
+  final NewServises newservises = NewServises();
+  Future<void> fetchNews() async {
+    try{
+      List<Articlemodel> articles= await newservises.getNews(selectedCategory);
+      setState(() {
+        listArticles=articles;
+      });
     }
-    setState(() {
-      listArticles = artModel;
-    });
-    } catch (e) {
-      print("Error fetching news: $e");
+    catch(err){
+setState(() {
+
+  errMsg = err.toString();
+
+});
     }
   }
-  // void delete(id)async{
-  //   Dio dio = Dio();
-  //
-  //   Response response = await dio.delete('https://myprojtest.free.beeceptor.com/api/products/${id}');
-  //   fetchData();
-  // }
-  // void update(id)async{
-  //
-  //   Dio dio = Dio();
-  //
-  //   Response response = await dio.patch(
-  //     'https://myprojtest.free.beeceptor.com/api/products/$id',
-  //     data: {
-  //       "name": nameController.text,
-  //       "description": descriptionController.text,
-  //       "price": double.tryParse(priceController.text),
-  //     },
-  //   );
-  //
-  //   fetchData();
-  // }
+
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getNews();
+    fetchNews();
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("News App" ,
+        appBar: AppBar(
+
+          title: Text("News App" ,
 
           style: TextStyle(color: Colors.purple.shade700),),centerTitle: true,
+
+          actions: [
+            DropdownButton(
+                items: categories.map((category){
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+
+                }).toList(),
+                onChanged: (value){
+                  if(value != null){
+                    selectedCategory=value;
+                    fetchNews();
+                  }
+                })
+          ],
         ),
         floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -89,7 +84,7 @@ class _MyAppState extends State<MyApp> {
                 MaterialPageRoute(builder: (context) => add()),
               ).then((value) {
                 if (value == true) {
-                  getNews(); // إعادة تحميل البيانات بعد الإضافة
+                  fetchNews(); // إعادة تحميل البيانات بعد الإضافة
                 }
               });
 
